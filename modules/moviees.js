@@ -1,21 +1,29 @@
 const axios = require('axios');
 
+let movieMemory = {};
+
 function getMovieData(req, res) {
     let movieHandler = req.query.city
         //http://localhost:3004/movies?city=Amman 
 
     let movieLink = `https://api.themoviedb.org/3/search/movie?api_key=${process.env.MOVIE_KEY}&query=${movieHandler}`
         // console.log(movieLink)
-    try {
-        axios.get(movieLink).then(dataCollectionResult => {
-            let array = dataCollectionResult.data.results.map(element => {
-                return new MovieCon(element)
-            })
-            res.send(array)
-        });
 
-    } catch (error) {
-        res.send(error);
+    if (movieMemory[movieHandler] !== undefined) {
+        res.send(movieMemory[movieHandler]);
+    } else {
+
+        try {
+            axios.get(movieLink).then(dataCollectionResult => {
+                let array = dataCollectionResult.data.results.map(element => {
+                    return new MovieCon(element)
+                })
+                res.send(array)
+            });
+
+        } catch (error) {
+            res.send(error);
+        }
     }
 }
 
