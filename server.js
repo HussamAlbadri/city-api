@@ -15,60 +15,67 @@ server.use(cors());
 // })
 // const weatherInformation = require('./data/weatherApi.json')
 
-server.get('/weather', getweatherinformation);
+server.get('/getweatherApi', getweatherinformation);
 server.get('/movies', getMovieData);
 
 
 class WeatherApi {
-    constructor(date, description) {
-        this.date = date;
-        this.description = description;
+    constructor(item) {
+        this.date = item.valid_date;
+        this.description = item.weather.description;
     }
 
 }
 
 class MovieCon {
-    constructor(data) {
-        this.title = data.title;
-        this.overView = data.over_view;
-        this.NumberOfVotes = data.vote;
-        this.total = data.numberOfTotalVotes;
-        this.image_url = 'https://image.tmdb.org/t/p/w500' + data.image_path;
-        this.popularity = data.popularity;
-        this.date_proper = data.release_date;
-
+    constructor(element) {
+        this.title = element.title;
+        this.overview = element.overview;
+        this.average_votes = element.vote_average;
+        this.total_votes = element.vote_count;
+        this.image_url = 'https://image.tmdb.org/t/p/w500' + element.poster_path;
+        this.popularity = element.popularity;
+        this.released_on = element.release_date;
     }
 }
 
 function getweatherinformation(req, res) {
-    //localhost:3005/getweatherApi?city=Amman
+    //http://localhost:3004/getweatherApi?city=Amman 
 
+    let weatherArea = req.query.city;
+
+    let URL = `https://api.weatherbit.io/v2.0/forecast/daily?city=${weatherArea}&key=${process.env.WEATHER_KEY}`
+    console.log(URL)
     try {
-        let weatherArea = req.query.city;
-
-        let URL = `https://api.weatherbit.io/v2.0/forecast/daily?city=${weatherArea}&key=${process.env.WEATHER_KEY}`
-        let array = cityData.data.map(ele => {
-            return new WeatherApi(ele.datetime, ele.weather.description);
-        });
-        res.send(array);
-    } catch (err) {
-        res.send("Error: Something Went Wrong \n The Site Is Not Avaible");
+        axios.get(URL).then(dataCollection => {
+            let array = dataCollection.data.data.map(item => {
+                return new WeatherApi(item)
+            })
+            res.send(array)
+        })
+    } catch (error) {
+        res.send(error);
     }
+
 }
 
 function getMovieData(req, res) {
     let movieHandler = req.query.city
+        //http://localhost:3004/movies?city=Amman 
 
-    let movieLink = `https://api.themoviedb.org/3/search/movie?api_key=${process.env.MOVIE_API_KEY}&query=${movieHandler}`
+    let movieLink = `https://api.themoviedb.org/3/search/movie?api_key=${process.env.MOVIE_KEY}&query=${movieHandler}`
+        // console.log(movieLink)
+    try {
+        axios.get(movieLink).then(dataCollectionResult => {
+            let array = dataCollectionResult.data.results.map(element => {
+                return new MovieCon(element)
+            })
+            res.send(array)
+        });
 
-    axios.get(movieLink).then(dataCollectionResult => {
-        let array = dataCollectionResult.data.results.map(item => {
-            return new MovieCon(item)
-        })
-        res.send(array)
-    }).catch(error => {
-        res.send(error)
-    })
+    } catch (error) {
+        res.send(error);
+    }
 }
 
 
